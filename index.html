@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบเช็คชื่อเข้าเรียนอัตโนมัติ (หน้าบ้าน)</title>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Prompt -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Prompt', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f0f2f5; 
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Top Navigation Bar */
+        .top-nav {
+            width: 100%;
+            background: #1a73e8;
+            color: #ffffff;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .nav-btn {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.25);
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.25);
+        }
+
+        /* Sidebar Drawer (เมนูย่อ) */
+        .sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(3px);
+            z-index: 200;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .sidebar-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+        .sidebar-drawer {
+            position: fixed;
+            top: 0;
+            left: -290px;
+            width: 280px;
+            height: 100%;
+            background: #ffffff;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+            z-index: 210;
+            transition: left 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-drawer.active {
+            left: 0;
+        }
+        .sidebar-header {
+            background: #1a73e8;
+            color: white;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sidebar-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            width: auto;
+            padding: 4px 8px;
+        }
+        .sidebar-menu {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            color: #334155;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .sidebar-link:hover {
+            background: #f1f5f9;
+        }
+        .sidebar-link.active {
+            background: #e8f0fe;
+            color: #1a73e8;
+            font-weight: 600;
+        }
+        .sidebar-link i {
+            width: 20px;
+            text-align: center;
+            font-size: 16px;
+        }
+        .menu-category {
+            font-size: 11px;
+            font-weight: bold;
+            color: #94a3b8;
+            text-transform: uppercase;
+            padding: 8px 12px 2px 12px;
+        }
+
+        .container { 
+            width: 100%; 
+            max-width: 600px; 
+            padding: 20px;
+            flex-grow: 1;
+        }
+        .card { 
+            background: #ffffff; 
+            padding: 1.5rem; 
+            border-radius: 14px; 
+            box-shadow: 0 4px 14px rgba(0,0,0,0.06); 
+            text-align: center; 
+            margin-bottom: 20px;
+        }
+        h2, h3 { margin-top: 0; color: #1a73e8; }
+        input[type="text"] {
+            padding: 12px 14px;
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: 15px;
+            font-family: inherit;
+        }
+        .btn-checkin { 
+            background-color: #1a73e8; 
+            color: #ffffff; 
+            border: none; 
+            padding: 12px 20px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            width: 100%;
+            font-weight: bold;
+            font-family: inherit;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-checkin:hover { background-color: #1557b0; }
+        .btn-checkin:disabled { background-color: #a0c3ff; cursor: not-allowed; }
+        #status { margin-top: 15px; font-weight: 500; color: #333; line-height: 1.5; font-size: 14px; }
+        
+        .table-container { max-height: 320px; overflow-y: auto; margin-top: 10px; border-radius: 8px; border: 1px solid #e5e7eb; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; }
+        th, td { padding: 10px 12px; border-bottom: 1px solid #eee; }
+        th { background-color: #f8fafc; position: sticky; top: 0; color: #475569; font-weight: 600; }
+        .badge { background-color: #e6f4ea; color: #137333; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+
+        /* การแบ่งหน้า (Pagination) หน้าก่อน - หน้าหลัง */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #f1f5f9;
+            font-size: 13px;
+            color: #64748b;
+        }
+        .pagination-btns {
+            display: flex;
+            gap: 6px;
+        }
+        .page-btn {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: inherit;
+            color: #334155;
+            transition: all 0.2s;
+            width: auto;
+        }
+        .page-btn:hover:not(:disabled) {
+            background: #f8fafc;
+            border-color: #94a3b8;
+        }
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f1f5f9;
+        }
+    </style>
+</head>
+<body>
+
+<!-- แถบเมนูด้านบน -->
+<header class="top-nav">
+    <div class="nav-brand">
+        <button class="nav-btn" onclick="toggleSidebar()" aria-label="Toggle Menu">
+            <i class="fa-solid fa-bars"></i>
+            <span>เมนู</span>
+        </button>
+        <span>เช็คชื่อเข้าเรียน (หน้าบ้าน)</span>
+    </div>
+    <a href="home.html" class="nav-btn" style="text-decoration: none;">
+        <i class="fa-solid fa-house"></i>
+        <span style="display: inline-block;">หน้าหลัก</span>
+    </a>
+</header>
+
+<!-- เมนูย่อ (Collapsible Sidebar Drawer) -->
+<div id="sidebarBackdrop" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+<aside id="sidebarDrawer" class="sidebar-drawer">
+    <div class="sidebar-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-bars-staggered" style="color: #fcd34d;"></i>
+            <strong>เมนูนำทาง</strong>
+        </div>
+        <button class="sidebar-close" onclick="toggleSidebar()">&times;</button>
+    </div>
+    <div class="sidebar-menu">
+        <a href="home.html" class="sidebar-link">
+            <i class="fa-solid fa-house" style="color: #4f46e5;"></i>
+            <span>หน้าหลัก (Dashboard)</span>
+        </a>
+
+        <div class="menu-category">ส่วนหน้าบ้าน</div>
+        <a href="index.html" class="sidebar-link active">
+            <i class="fa-solid fa-user-check" style="color: #10b981;"></i>
+            <span>เช็คชื่อนักเรียน (หน้าบ้าน)</span>
+        </a>
+
+        <div class="menu-category">ส่วนหน้าหลัง / หลังบ้าน</div>
+        <a href="teacher.html" class="sidebar-link">
+            <i class="fa-solid fa-chalkboard-user" style="color: #2563eb;"></i>
+            <span>แผงควบคุมอาจารย์ (หน้าหลัง)</span>
+        </a>
+        <a href="addmin.html" class="sidebar-link">
+            <i class="fa-solid fa-sliders" style="color: #9333ea;"></i>
+            <span>ระบบแอดมิน & แผนที่ (หน้าหลัง)</span>
+        </a>
+
+        <div style="border-top: 1px solid #f1f5f9; margin-top: 8px; padding-top: 8px;">
+            <a href="https://docs.google.com/spreadsheets/d/1WgsO8zuOhWxpwMlP_F6K36RoODExA0sINMvaSMhXxS4/edit?gid=197768674#gid=197768674" target="_blank" class="sidebar-link">
+                <i class="fa-solid fa-file-excel" style="color: #16a34a;"></i>
+                <span>เปิดดู Google Sheets</span>
+            </a>
+        </div>
+    </div>
+</aside>
+
+<div class="container">
+    <div class="card">
+        <h2><i class="fa-solid fa-location-dot"></i> เช็คชื่อเข้าเรียน</h2>
+        <input type="text" id="studentId" placeholder="กรอกรหัสนักศึกษา เช่น 1112">
+        <button id="checkinBtn" class="btn-checkin" onclick="getLocation()">
+            <i class="fa-solid fa-map-pin"></i> ยืนยันตำแหน่งและเช็คชื่อ
+        </button>
+        <div id="status"></div>
+    </div>
+
+    <div class="card">
+        <h3><i class="fa-solid fa-clipboard-check"></i> สรุปผู้เช็คชื่อเรียบร้อยแล้ว</h3>
+        <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="ค้นหารหัส, ชื่อ หรือสาขาวิชา...">
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>รหัส</th>
+                        <th>ชื่อ - นามสกุล</th>
+                        <th>สาขาวิชา</th>
+                        <th>เวลา</th>
+                    </tr>
+                </thead>
+                <tbody id="attendanceTable">
+                    <tr><td colspan="4" style="text-align: center;">กำลังโหลดข้อมูล...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- แถบแบ่งหน้า หน้าก่อน - หน้าหลัง (Pagination) -->
+        <div class="pagination-container">
+            <span id="pageInfo">แสดงข้อมูลหน้าที่ 1</span>
+            <div class="pagination-btns">
+                <button id="prevBtn" class="page-btn" onclick="changePage(-1)" disabled>
+                    <i class="fa-solid fa-chevron-left"></i> หน้าก่อน
+                </button>
+                <button id="nextBtn" class="page-btn" onclick="changePage(1)" disabled>
+                    หน้าหลัง <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 🔗 ลิงก์ API Google Apps Script
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxRzF5luY5xNRL8r0GTENd9-lGWYXZat2oc6kJXK7KZA7WiLHcgKsiSebB2rqXhzObs/exec"; 
+
+    // ตัวแปรสำหรับระบบ Pagination (หน้าก่อน - หน้าหลัง)
+    let allAttendanceData = [];
+    let filteredData = [];
+    let currentPage = 1;
+    const itemsPerPage = 6;
+
+    // ระบบเมนูย่อ (Toggle Sidebar)
+    function toggleSidebar() {
+        const drawer = document.getElementById("sidebarDrawer");
+        const backdrop = document.getElementById("sidebarBackdrop");
+        drawer.classList.toggle("active");
+        backdrop.classList.toggle("active");
+    }
+
+    window.onload = loadAttendance;
+
+    function getLocation() {
+        const status = document.getElementById("status");
+        const studentId = document.getElementById("studentId").value.trim();
+        const btn = document.getElementById("checkinBtn");
+
+        if (!studentId) {
+            alert("กรุณากรอกรหัสนักศึกษาก่อนครับ");
+            return;
+        }
+
+        if (navigator.geolocation) {
+            status.innerHTML = "กำลังตรวจสอบพิกัด GPS...";
+            btn.disabled = true;
+            navigator.geolocation.getCurrentPosition(
+                (pos) => sendData(pos, studentId),
+                showError,
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
+        } else {
+            status.innerText = "เบราว์เซอร์ของคุณไม่รองรับการระบุตำแหน่ง";
+        }
+    }
+
+    function sendData(position, studentId) {
+        const status = document.getElementById("status");
+        const btn = document.getElementById("checkinBtn");
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+
+        status.innerText = "กำลังค้นหาข้อมูลนักศึกษาและบันทึก...";
+
+        fetch(SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify({ id: studentId, lat: lat, lon: lon })
+        })
+        .then(res => res.json())
+        .then(response => {
+            btn.disabled = false;
+            if (response.status === "success") {
+                status.innerHTML = `<span style="color: green;">เช็คชื่อสำเร็จ!</span><br><b>ชื่อ:</b> ${response.name}<br><b>สาขา:</b> ${response.department}`;
+                document.getElementById("studentId").value = "";
+                loadAttendance(); 
+            } else {
+                status.innerHTML = `<span style="color: red;">${response.message}</span>`;
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            status.innerText = "เกิดข้อผิดพลาดในการเชื่อมต่อระบบ";
+            console.error(err);
+        });
+    }
+
+    function showError(error) {
+        document.getElementById("checkinBtn").disabled = false;
+        document.getElementById("status").innerText = "ไม่สามารถดึงตำแหน่งได้ กรุณาเปิดสิทธิ์ใช้ GPS บนเบราว์เซอร์";
+    }
+
+    function loadAttendance() {
+        const tableBody = document.getElementById("attendanceTable");
+        
+        fetch(SCRIPT_URL)
+        .then(res => res.json())
+        .then(response => {
+            if (response.status === "success") {
+                allAttendanceData = response.data || [];
+                filteredData = [...allAttendanceData].reverse();
+                currentPage = 1;
+                renderPaginatedTable();
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: red;">ไม่สามารถดึงข้อมูลตารางสรุปรายชื่อได้</td></tr>`;
+        });
+    }
+
+    function renderPaginatedTable() {
+        const tableBody = document.getElementById("attendanceTable");
+        const pageInfo = document.getElementById("pageInfo");
+        const prevBtn = document.getElementById("prevBtn");
+        const nextBtn = document.getElementById("nextBtn");
+
+        if (filteredData.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center;">ไม่มีข้อมูลการเช็คชื่อ</td></tr>`;
+            pageInfo.innerText = "ไม่พบรายการ";
+            prevBtn.disabled = true;
+            nextBtn.disabled = true;
+            return;
+        }
+
+        const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const pageItems = filteredData.slice(startIndex, startIndex + itemsPerPage);
+
+        let rows = "";
+        pageItems.forEach(item => {
+            rows += `
+                <tr>
+                    <td><b>${item.id}</b></td>
+                    <td>${item.name}</td>
+                    <td><span class="badge">${item.dept}</span></td>
+                    <td><small>${item.time}</small></td>
+                </tr>
+            `;
+        });
+        tableBody.innerHTML = rows;
+
+        pageInfo.innerText = `หน้า ${currentPage} จาก ${totalPages} (ทั้งหมด ${filteredData.length} รายการ)`;
+        prevBtn.disabled = (currentPage <= 1);
+        nextBtn.disabled = (currentPage >= totalPages);
+    }
+
+    function changePage(direction) {
+        currentPage += direction;
+        renderPaginatedTable();
+    }
+
+    function filterTable() {
+        const filter = document.getElementById("searchInput").value.toUpperCase();
+        filteredData = allAttendanceData.slice().reverse().filter(item => {
+            return (item.id && item.id.toString().toUpperCase().includes(filter)) ||
+                   (item.name && item.name.toUpperCase().includes(filter)) ||
+                   (item.dept && item.dept.toUpperCase().includes(filter));
+        });
+        currentPage = 1;
+        renderPaginatedTable();
+    }
+</script>
+
+</body>
+</html>

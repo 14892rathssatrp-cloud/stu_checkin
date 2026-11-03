@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบแอดมิน & ติดตามพิกัดนักศึกษา (หน้าหลัง)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Prompt -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Leaflet.js (Map) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { font-family: 'Prompt', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Header Navbar พร้อมปุ่มเมนูย่อ -->
+    <header class="bg-indigo-600 text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-3.5 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <!-- ปุ่มเปิด/ปิดเมนูย่อ -->
+                <button onclick="toggleSidebar()" aria-label="Toggle Menu"
+                        class="p-2 rounded-xl bg-indigo-700/60 hover:bg-indigo-700 border border-indigo-400/30 text-white transition focus:outline-none flex items-center gap-2 text-sm font-medium">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                    <span class="hidden sm:inline">เมนู</span>
+                </button>
+                <div class="flex items-center space-x-2.5">
+                    <div class="bg-white/10 p-2 rounded-xl border border-white/20">
+                        <i class="fa-solid fa-graduation-cap text-xl text-amber-300"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-base sm:text-lg font-bold leading-tight">Admin & Student Tracker</h1>
+                        <p class="text-[11px] text-indigo-200">ระบบจัดการรายชื่อและติดตามพิกัดนักศึกษา (หน้าหลัง)</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <a href="home.html" class="bg-indigo-700/60 hover:bg-indigo-700 text-white text-xs px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 border border-indigo-400/30">
+                    <i class="fa-solid fa-house"></i>
+                    <span class="hidden sm:inline">หน้าหลัก</span>
+                </a>
+                <a href="https://docs.google.com/spreadsheets/d/1WgsO8zuOhWxpwMlP_F6K36RoODExA0sINMvaSMhXxS4/edit?pli=1&gid=2013525265#gid=2013525265" target="_blank" 
+                   class="bg-emerald-500 hover:bg-emerald-600 text-white text-xs px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-file-excel"></i>
+                    <span class="hidden md:inline">Google Sheets</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- เมนูย่อ (Sidebar Drawer / Collapsible Menu) -->
+    <div id="sidebarBackdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden transition-opacity duration-300 opacity-0"></div>
+    <aside id="sidebarDrawer" class="fixed top-0 left-0 h-full w-72 bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+        <!-- หัวเมนูย่อ -->
+        <div class="p-4 bg-indigo-600 text-white flex justify-between items-center shadow">
+            <div class="flex items-center space-x-2.5">
+                <i class="fa-solid fa-bars-staggered text-lg text-amber-300"></i>
+                <div>
+                    <h2 class="font-bold text-sm">เมนูนำทาง</h2>
+                    <p class="text-[11px] text-indigo-200">เลือกหน้าที่ต้องการใช้งาน</p>
+                </div>
+            </div>
+            <button onclick="toggleSidebar()" class="w-8 h-8 rounded-lg bg-indigo-700/60 hover:bg-indigo-700 flex items-center justify-center text-white transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <!-- รายการเมนู -->
+        <nav class="p-4 space-y-2 flex-grow overflow-y-auto">
+            <a href="home.html" class="flex items-center space-x-3 px-3.5 py-3 rounded-xl text-slate-700 hover:bg-slate-100 font-medium transition">
+                <i class="fa-solid fa-house w-6 text-indigo-600 text-center"></i>
+                <span>หน้าหลัก (Dashboard)</span>
+            </a>
+
+            <div class="pt-2 pb-1">
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3">ส่วนหน้าบ้าน</span>
+            </div>
+
+            <a href="index.html" class="flex items-center space-x-3 px-3.5 py-3 rounded-xl text-slate-700 hover:bg-slate-100 font-medium transition">
+                <i class="fa-solid fa-user-check w-6 text-emerald-600 text-center"></i>
+                <div class="flex-grow">
+                    <div class="text-sm">เช็คชื่อนักศึกษา</div>
+                    <div class="text-[11px] text-slate-400">สแกนพิกัด GPS & เช็คชื่อ</div>
+                </div>
+                <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-bold">หน้าบ้าน</span>
+            </a>
+
+            <div class="pt-2 pb-1">
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3">ส่วนหน้าหลัง / จัดการระบบ</span>
+            </div>
+
+            <a href="teacher.html" class="flex items-center space-x-3 px-3.5 py-3 rounded-xl text-slate-700 hover:bg-slate-100 font-medium transition">
+                <i class="fa-solid fa-chalkboard-user w-6 text-blue-600 text-center"></i>
+                <div class="flex-grow">
+                    <div class="text-sm">แผงควบคุมอาจารย์</div>
+                    <div class="text-[11px] text-slate-400">ปักหมุด & สร้าง QR Code</div>
+                </div>
+                <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-bold">อาจารย์</span>
+            </a>
+
+            <a href="addmin.html" class="flex items-center space-x-3 px-3.5 py-3 rounded-xl bg-purple-50 text-purple-700 font-semibold border border-purple-100 transition">
+                <i class="fa-solid fa-sliders w-6 text-purple-600 text-center"></i>
+                <div class="flex-grow">
+                    <div class="text-sm">ระบบแอดมิน</div>
+                    <div class="text-[11px] text-purple-400">ฐานข้อมูล & แผนที่ GPS</div>
+                </div>
+                <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded font-bold">หลังบ้าน</span>
+            </a>
+
+            <div class="pt-3 border-t border-slate-100">
+                <a href="https://docs.google.com/spreadsheets/d/1WgsO8zuOhWxpwMlP_F6K36RoODExA0sINMvaSMhXxS4/edit?gid=197768674#gid=197768674" target="_blank"
+                   class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 text-sm transition">
+                    <i class="fa-solid fa-table w-6 text-emerald-600 text-center"></i>
+                    <span>เปิดดู Google Sheets</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- ท้ายเมนูย่อ -->
+        <div class="p-4 border-t border-slate-100 bg-slate-50 text-xs text-slate-400 text-center">
+            Classroom System © 2026
+        </div>
+    </aside>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full space-y-6">
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Left Side: Admin Form (ฟอร์มสำหรับแอดมินเพิ่มนักศึกษา) -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center space-x-3 border-b border-slate-100 pb-4 mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-user-plus"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-slate-800">เพิ่มรายชื่อนักศึกษาใหม่</h2>
+                            <p class="text-xs text-slate-400">บันทึกเข้าแท็บ Database โดยตรง (หน้าหลัง)</p>
+                        </div>
+                    </div>
+
+                    <form id="adminForm" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">รหัสนักศึกษา (studentID)</label>
+                            <input type="text" id="studentID" name="studentID" required placeholder="เช่น 1114"
+                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">ชื่อ - นามสกุล (name)</label>
+                            <input type="text" id="name" name="name" required placeholder="เช่น ซี"
+                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">แผนก/สาขา (department)</label>
+                            <input type="text" id="department" name="department" required placeholder="เช่น คอม"
+                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+
+                        <button type="submit" id="submitBtn"
+                                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl shadow transition flex items-center justify-center gap-2 text-sm mt-2">
+                            <i class="fa-solid fa-paper-plane"></i> บันทึกข้อมูลลง Google Sheet
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Side: Data Table (Database) พร้อมแบ่งหน้าก่อน-หน้าหลัง -->
+            <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between">
+                <div>
+                    <div class="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                        <h2 class="font-bold text-slate-700 flex items-center gap-2 text-sm">
+                            <i class="fa-solid fa-database text-indigo-500"></i> ตาราง Database (รายชื่อในระบบ)
+                        </h2>
+                        <span class="text-xs bg-indigo-100 text-indigo-700 font-semibold px-2.5 py-1 rounded-full">ในระบบ</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-100/50 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-100">
+                                    <th class="py-3 px-4">รหัสนักศึกษา</th>
+                                    <th class="py-3 px-4">ชื่อ</th>
+                                    <th class="py-3 px-4">แผนก</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-sm" id="studentTableBody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Pagination (หน้าก่อน - หน้าหลัง) -->
+                <div class="p-3 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
+                    <span id="adminPageInfo">กำลังโหลด...</span>
+                    <div class="flex gap-2">
+                        <button id="adminPrevBtn" onclick="changeAdminPage(-1)" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 font-medium transition disabled:opacity-40 disabled:cursor-not-allowed">
+                            <i class="fa-solid fa-chevron-left mr-1"></i> หน้าก่อน
+                        </button>
+                        <button id="adminNextBtn" onclick="changeAdminPage(1)" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 font-medium transition disabled:opacity-40 disabled:cursor-not-allowed">
+                            หน้าหลัง <i class="fa-solid fa-chevron-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Section: Interactive Map -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                <h2 class="font-bold text-slate-700 flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-map-location-dot text-indigo-600"></i> แผนที่แสดงพิกัดอาจารย์และนักศึกษา
+                </h2>
+                <span class="text-xs text-slate-400">Leaflet Map</span>
+            </div>
+            <div id="map" class="w-full h-80"></div>
+        </div>
+
+    </main>
+
+    <!-- Script Handling Data and Form Submission -->
+    <script>
+        // ระบบเปิด/ปิดเมนูย่อ (Toggle Sidebar)
+        function toggleSidebar() {
+            const drawer = document.getElementById('sidebarDrawer');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            const isOpen = !drawer.classList.contains('-translate-x-full');
+
+            if (isOpen) {
+                drawer.classList.add('-translate-x-full');
+                backdrop.classList.add('opacity-0');
+                setTimeout(() => backdrop.classList.add('hidden'), 300);
+            } else {
+                backdrop.classList.remove('hidden');
+                setTimeout(() => backdrop.classList.remove('opacity-0'), 10);
+                drawer.classList.remove('-translate-x-full');
+            }
+        }
+
+        // ลิงก์ Web App URL ของคุณที่ใส่เชื่อมต่อไว้แล้ว
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxpy-iB3Qw5cxuyo-844bPu6UUymRbm9Uwzj6Z6f2jHTv5IM2uSsKg8J60i1R6b0cg/exec";
+
+        // ข้อมูลตั้งต้น
+        const initialStudents = [
+            { studentID: "1112", name: "เอ", department: "คอม" },
+            { studentID: "1113", name: "บี", department: "คอม" }
+        ];
+
+        let adminCurrentPage = 1;
+        const adminItemsPerPage = 5;
+
+        const locations = [
+            { name: "เอ (1112)", lat: 17.3882579, lon: 104.756418, role: "นักศึกษา" },
+            { name: "เอ (1112)", lat: 17.3883097, lon: 104.7564579, role: "นักศึกษา" },
+            { name: "บี (1113)", lat: 17.38936848, lon: 104.7546334, role: "นักศึกษา" },
+            { name: "อาจารย์", lat: 17.38922475, lon: 104.7548335, role: "อาจารย์" }
+        ];
+
+        // แสดงตารางนักศึกษาแบบแบ่งหน้าก่อน - หน้าหลัง
+        function renderTable(data) {
+            const tbody = document.getElementById('studentTableBody');
+            const pageInfo = document.getElementById('adminPageInfo');
+            const prevBtn = document.getElementById('adminPrevBtn');
+            const nextBtn = document.getElementById('adminNextBtn');
+
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="py-4 text-center text-slate-400">ไม่มีข้อมูลนักศึกษา</td></tr>';
+                pageInfo.innerText = '0 รายการ';
+                prevBtn.disabled = true;
+                nextBtn.disabled = true;
+                return;
+            }
+
+            const totalPages = Math.ceil(data.length / adminItemsPerPage);
+            if (adminCurrentPage > totalPages) adminCurrentPage = totalPages;
+            if (adminCurrentPage < 1) adminCurrentPage = 1;
+
+            const start = (adminCurrentPage - 1) * adminItemsPerPage;
+            const pagedItems = data.slice(start, start + adminItemsPerPage);
+
+            pagedItems.forEach(item => {
+                const row = `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-3 px-4 font-semibold text-slate-700">${item.studentID}</td>
+                        <td class="py-3 px-4">${item.name}</td>
+                        <td class="py-3 px-4"><span class="bg-indigo-50 text-indigo-600 text-xs px-2.5 py-1 rounded-md font-medium">${item.department}</span></td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+
+            pageInfo.innerText = `หน้า ${adminCurrentPage} / ${totalPages} (ทั้งหมด ${data.length} คน)`;
+            prevBtn.disabled = (adminCurrentPage <= 1);
+            nextBtn.disabled = (adminCurrentPage >= totalPages);
+        }
+
+        function changeAdminPage(dir) {
+            adminCurrentPage += dir;
+            renderTable(initialStudents);
+        }
+
+        renderTable(initialStudents);
+
+        // ระบบส่งข้อมูลเข้า Google Sheets
+        const form = document.getElementById('adminForm');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...`;
+
+            const studentID = document.getElementById('studentID').value;
+            const name = document.getElementById('name').value;
+            const department = document.getElementById('department').value;
+
+            // ส่งข้อมูลไปยัง Google Apps Script
+            const fetchUrl = `${SCRIPT_URL}?studentID=${encodeURIComponent(studentID)}&name=${encodeURIComponent(name)}&department=${encodeURIComponent(department)}`;
+
+            fetch(fetchUrl, {
+                method: 'GET',
+                mode: 'no-cors'
+            })
+            .then(() => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'บันทึกเรียบร้อย!',
+                    text: `เพิ่มข้อมูลคุณ ${name} (${studentID}) เข้า Google Sheets เรียบร้อยแล้ว`,
+                    confirmButtonColor: '#4F46E5'
+                });
+
+                // อัปเดตตารางแสดงผลหน้าเว็บทันที
+                initialStudents.push({ studentID, name, department });
+                renderTable(initialStudents);
+
+                form.reset();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด',
+                    text: 'ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบสิทธิ์ของ Apps Script',
+                    confirmButtonColor: '#EF4444'
+                });
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> บันทึกข้อมูลลง Google Sheet`;
+            });
+        });
+
+        // แสดงแผนที่ Leaflet
+        document.addEventListener('DOMContentLoaded', () => {
+            const map = L.map('map').setView([17.38922475, 104.7548335], 16);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+
+            locations.forEach(loc => {
+                const marker = L.marker([loc.lat, loc.lon]).addTo(map);
+                marker.bindPopup(`<b>${loc.role}: ${loc.name}</b><br/>พิกัด: ${loc.lat}, ${loc.lon}`);
+            });
+        });
+    </script>
+</body>
+</html>

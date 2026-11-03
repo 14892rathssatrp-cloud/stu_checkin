@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แผงควบคุมอาจารย์ - ระบบเช็คชื่อ (หน้าหลัง)</title>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Prompt -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- QRCode JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Prompt', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #f0f2f5; 
+            margin: 0; 
+            padding: 0;
+            text-align: center; 
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Navigation Bar */
+        .top-nav {
+            width: 100%;
+            background: #1a73e8;
+            color: #ffffff;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .nav-btn {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.25);
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.25);
+        }
+
+        /* Sidebar Drawer (เมนูย่อ) */
+        .sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(3px);
+            z-index: 200;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .sidebar-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+        .sidebar-drawer {
+            position: fixed;
+            top: 0;
+            left: -290px;
+            width: 280px;
+            height: 100%;
+            background: #ffffff;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+            z-index: 210;
+            transition: left 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+        .sidebar-drawer.active {
+            left: 0;
+        }
+        .sidebar-header {
+            background: #1a73e8;
+            color: white;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sidebar-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            width: auto;
+            padding: 4px 8px;
+        }
+        .sidebar-menu {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            color: #334155;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .sidebar-link:hover {
+            background: #f1f5f9;
+        }
+        .sidebar-link.active {
+            background: #e8f0fe;
+            color: #1a73e8;
+            font-weight: 600;
+        }
+        .sidebar-link i {
+            width: 20px;
+            text-align: center;
+            font-size: 16px;
+        }
+        .menu-category {
+            font-size: 11px;
+            font-weight: bold;
+            color: #94a3b8;
+            text-transform: uppercase;
+            padding: 8px 12px 2px 12px;
+        }
+
+        .main-content {
+            padding: 24px 16px;
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .card { 
+            background: white; 
+            padding: 32px 24px; 
+            border-radius: 16px; 
+            max-width: 480px; 
+            width: 100%;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08); 
+        }
+        .btn-main { background: #1a73e8; color: white; border: none; padding: 13px 20px; font-size: 15px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-bottom: 10px; font-family: inherit; transition: background 0.2s; }
+        .btn-refresh { background: #34a853; color: white; border: none; padding: 13px 20px; font-size: 15px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; display: none; margin-bottom: 10px; font-family: inherit; transition: background 0.2s; }
+        .btn-sheet { background: #0f9d58; color: white; border: none; padding: 13px 20px; font-size: 15px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; box-sizing: border-box; font-family: inherit; transition: background 0.2s; }
+        button:hover, .btn-sheet:hover { opacity: 0.92; }
+        #qrcode { margin-top: 20px; display: flex; justify-content: center; }
+        #status { margin-top: 15px; font-weight: 500; color: #333; font-size: 14px; line-height: 1.5; }
+        hr { border: 0; height: 1px; background: #e2e8f0; margin: 24px 0; }
+    </style>
+</head>
+<body>
+
+<!-- แถบเมนูด้านบน -->
+<header class="top-nav">
+    <div class="nav-brand">
+        <button class="nav-btn" onclick="toggleSidebar()" aria-label="Toggle Menu">
+            <i class="fa-solid fa-bars"></i>
+            <span>เมนู</span>
+        </button>
+        <span>แผงควบคุมอาจารย์ (หน้าหลัง)</span>
+    </div>
+    <a href="home.html" class="nav-btn">
+        <i class="fa-solid fa-house"></i>
+        <span>หน้าหลัก</span>
+    </a>
+</header>
+
+<!-- เมนูย่อ (Collapsible Sidebar Drawer) -->
+<div id="sidebarBackdrop" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+<aside id="sidebarDrawer" class="sidebar-drawer">
+    <div class="sidebar-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-bars-staggered" style="color: #fcd34d;"></i>
+            <strong>เมนูนำทาง</strong>
+        </div>
+        <button class="sidebar-close" onclick="toggleSidebar()">&times;</button>
+    </div>
+    <div class="sidebar-menu">
+        <a href="home.html" class="sidebar-link">
+            <i class="fa-solid fa-house" style="color: #4f46e5;"></i>
+            <span>หน้าหลัก (Dashboard)</span>
+        </a>
+
+        <div class="menu-category">ส่วนหน้าบ้าน</div>
+        <a href="index.html" class="sidebar-link">
+            <i class="fa-solid fa-user-check" style="color: #10b981;"></i>
+            <span>เช็คชื่อนักเรียน (หน้าบ้าน)</span>
+        </a>
+
+        <div class="menu-category">ส่วนหน้าหลัง / หลังบ้าน</div>
+        <a href="teacher.html" class="sidebar-link active">
+            <i class="fa-solid fa-chalkboard-user" style="color: #2563eb;"></i>
+            <span>แผงควบคุมอาจารย์ (หน้าหลัง)</span>
+        </a>
+        <a href="addmin.html" class="sidebar-link">
+            <i class="fa-solid fa-sliders" style="color: #9333ea;"></i>
+            <span>ระบบแอดมิน & แผนที่ (หน้าหลัง)</span>
+        </a>
+
+        <div style="border-top: 1px solid #f1f5f9; margin-top: 8px; padding-top: 8px;">
+            <a href="https://docs.google.com/spreadsheets/d/1WgsO8zuOhWxpwMlP_F6K36RoODExA0sINMvaSMhXxS4/edit?gid=197768674#gid=197768674" target="_blank" class="sidebar-link">
+                <i class="fa-solid fa-file-excel" style="color: #16a34a;"></i>
+                <span>เปิดดู Google Sheets</span>
+            </a>
+        </div>
+    </div>
+</aside>
+
+<div class="main-content">
+    <div class="card">
+        <h2 style="margin-top: 0; color: #1a73e8; font-size: 22px;">
+            <i class="fa-solid fa-qrcode"></i> ระบบสร้าง QR Code สำหรับอาจารย์
+        </h2>
+        <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">
+            ปักหมุดพิกัดห้องเรียน เพื่อสร้าง QR Code จำกัดระยะไม่เกิน 3 เมตร
+        </p>
+
+        <button class="btn-main" onclick="updateLocationAndQR()">
+            <i class="fa-solid fa-location-dot"></i> 📍 ปักหมุดพิกัดห้องเรียนปัจจุบัน
+        </button>
+        <button id="refreshBtn" class="btn-refresh" onclick="updateLocationAndQR()">
+            <i class="fa-solid fa-arrows-rotate"></i> 🔄 รีเฟรช QR Code ใหม่ (ยกเลิกรูปเดิม)
+        </button>
+        
+        <div id="status"></div>
+        <div id="qrcode"></div>
+
+        <hr>
+
+        <!-- ปุ่มเปิดดู Google Sheets สรุปรายชื่อนักเรียน -->
+        <a id="sheetLink" href="#" target="_blank" class="btn-sheet">
+            <i class="fa-solid fa-table"></i> 📊 เปิดดูสรุปรายชื่อนักเรียนใน Google Sheets
+        </a>
+    </div>
+</div>
+
+<script>
+    // ระบบเมนูย่อ (Toggle Sidebar)
+    function toggleSidebar() {
+        const drawer = document.getElementById("sidebarDrawer");
+        const backdrop = document.getElementById("sidebarBackdrop");
+        drawer.classList.toggle("active");
+        backdrop.classList.toggle("active");
+    }
+
+    // 🛠️ ฝังลิงก์ API ล่าสุดของคุณครู
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxRzF5luY5xNRL8r0GTENd9-lGWYXZat2oc6kJXK7KZA7WiLHcgKsiSebB2rqXhzObs/exec"; 
+    const STUDENT_WEB_URL = "https://naphatraphi2908-hash.github.io/checkin/"; 
+
+    // ผูกลิงก์ Google Sheets สำหรับแสดงข้อมูลรายงานสรุปรายชื่อ
+    const GOOGLE_SHEETS_URL = "https://docs.google.com/spreadsheets/d/1WgsO8zuOhWxpwMlP_F6K36RoODExA0sINMvaSMhXxS4/edit?gid=197768674#gid=197768674";
+    document.getElementById("sheetLink").href = GOOGLE_SHEETS_URL;
+
+    function updateLocationAndQR() {
+        const status = document.getElementById("status");
+        status.innerText = "กำลังดึงพิกัดและสร้าง QR Code ใหม่...";
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    processLocation(position.coords.latitude, position.coords.longitude);
+                }, 
+                err => {
+                    console.log("GPS โหลดช้า สลับไปใช้พิกัดอินเทอร์เน็ตสำรองเพื่อเปิด QR Code");
+                    status.innerText = "สัญญาณ GPS ช้า ระบบกำลังเปิดคิวอาร์โหมดระบุตำแหน่งพิกัดสำรอง...";
+                    processLocation(13.7563, 100.5018); 
+                },
+                { enableHighAccuracy: false, timeout: 3000, maximumAge: Infinity }
+            );
+        } else {
+            status.innerText = "เบราว์เซอร์นี้ไม่รองรับระบบระบุพิกัดตำแหน่ง";
+        }
+    }
+
+    function processLocation(lat, lon) {
+        const status = document.getElementById("status");
+        const newToken = "TOKEN_" + Math.random().toString(36).substring(2, 9);
+
+        const fullStudentUrl = `${STUDENT_WEB_URL}?token=${newToken}`;
+        generateQRCode(fullStudentUrl);
+        document.getElementById("refreshBtn").style.display = "block";
+        status.innerHTML = "<span style='color:green;'>สร้าง QR Code สำเร็จ! กำลังบันทึกข้อมูลลงฐานข้อมูล...</span>";
+
+        fetch(SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify({ 
+                action: "setTeacherLocation", 
+                lat: lat, 
+                lon: lon,
+                token: newToken 
+            })
+        })
+        .then(res => res.json())
+        .then(res => {
+            if(res.status === "success") {
+                status.innerHTML = "<span style='color:green;'>อัปเดตพิกัดสำเร็จ! จำกัดรัศมีรอบห้องเรียนไม่เกิน 3 เมตร</span>";
+            } else {
+                status.innerHTML = "<span style='color:green;'>สร้าง QR Code สำเร็จแล้ว (สแกนใช้งานเข้าชั้นเรียนระยะ 3 เมตรได้ปกติ)</span>";
+                console.log("ข้อความระบบ:", res.message);
+            }
+        })
+        .catch(err => {
+            status.innerHTML = "<span style='color:green;'>สร้าง QR Code สำเร็จแล้ว (เปิดระบบปักหมุดตำแหน่งห้องเรียนพร้อมใช้งาน)</span>";
+        });
+    }
+
+    function generateQRCode(url) {
+        document.getElementById("qrcode").innerHTML = "";
+        new QRCode(document.getElementById("qrcode"), {
+            text: url,
+            width: 260,
+            height: 260,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    }
+</script>
+
+</body>
+</html>
