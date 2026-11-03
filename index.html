@@ -727,6 +727,9 @@
                     const dest = pendingRedirectTab;
                     pendingRedirectTab = null;
                     switchTab(dest);
+                } else {
+                    // หากไม่ได้ระบุหน้าที่ต้องการ ให้เปิดหน้าระบบแอดมินโดยตรงตามคำขอ
+                    switchTab("admin");
                 }
             } else {
                 errBox.innerText = "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง (ทดลองใช้: admin / 1234)";

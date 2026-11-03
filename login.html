@@ -54,7 +54,7 @@
             </div>
             <div class="space-y-2 pt-2">
                 <button onclick="redirectToTarget()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow">
-                    <i class="fa-solid fa-arrow-right"></i> ไปยังระบบจัดการ
+                    <i class="fa-solid fa-arrow-right"></i> ไปยังหน้าระบบแอดมิน (Admin Portal)
                 </button>
                 <button onclick="handleLogout()" class="w-full bg-slate-100 hover:bg-slate-200 text-rose-600 font-medium py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
                     <i class="fa-solid fa-arrow-right-from-bracket"></i> ออกจากระบบ
@@ -158,9 +158,9 @@
         const DEMO_USER = "admin";
         const DEMO_PASS = "1234";
 
-        // อ่าน redirect parameter จาก URL เช่น login.html?redirect=teacher
+        // อ่าน redirect parameter จาก URL เช่น login.html?redirect=teacher (ค่าเริ่มต้นคือ admin)
         const urlParams = new URLSearchParams(window.location.search);
-        const targetRedirect = urlParams.get('redirect') || 'home';
+        const targetRedirect = urlParams.get('redirect') || 'admin';
 
         function checkExistingLogin() {
             const isAuth = localStorage.getItem("stu_checkin_auth") === "true";
@@ -212,8 +212,8 @@
                     Swal.fire({
                         icon: "success",
                         title: "เข้าสู่ระบบสำเร็จ!",
-                        text: "ยินดีต้อนรับอาจารย์ / ผู้ดูแลระบบ",
-                        timer: 1300,
+                        text: "กำลังพาท่านเข้าสู่หน้าระบบแอดมิน...",
+                        timer: 1200,
                         showConfirmButton: false
                     }).then(() => {
                         redirectToTarget();
@@ -228,10 +228,11 @@
         function redirectToTarget() {
             if (targetRedirect === 'teacher') {
                 window.location.href = "index.html#teacher";
-            } else if (targetRedirect === 'admin') {
-                window.location.href = "index.html#admin";
+            } else if (targetRedirect === 'standalone_admin') {
+                window.location.href = "addmin.html";
             } else {
-                window.location.href = "index.html#home";
+                // พุ่งตรงไปหน้าระบบแอดมินตามคำขอ
+                window.location.href = "index.html#admin";
             }
         }
 
