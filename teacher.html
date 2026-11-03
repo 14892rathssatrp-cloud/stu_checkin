@@ -190,6 +190,11 @@
             }
         }
 
+        // ตรวจสอบสิทธิ์การเข้าใช้งาน
+        if (localStorage.getItem("stu_checkin_auth") !== "true") {
+            window.location.href = "index.html#teacher";
+        }
+
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxRzF5luY5xNRL8r0GTENd9-lGWYXZat2oc6kJXK7KZA7WiLHcgKsiSebB2rqXhzObs/exec"; 
         const STUDENT_WEB_URL = window.location.href.replace(/teacher\.html.*/, 'index.html#student'); 
 

@@ -265,6 +265,11 @@
             }
         }
 
+        // ตรวจสอบสิทธิ์การเข้าใช้งาน
+        if (localStorage.getItem("stu_checkin_auth") !== "true") {
+            window.location.href = "index.html#admin";
+        }
+
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxpy-iB3Qw5cxuyo-844bPu6UUymRbm9Uwzj6Z6f2jHTv5IM2uSsKg8J60i1R6b0cg/exec";
 
         const initialStudents = [
