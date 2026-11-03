@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เข้าสู่ระบบ - ระบบเช็คชื่อ & จัดการเรียนการสอน</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Prompt -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { font-family: 'Prompt', sans-serif; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-slate-800 min-h-screen flex flex-col justify-between p-4 sm:p-6 relative overflow-x-hidden">
+
+    <!-- Decorative background blobs -->
+    <div class="fixed top-0 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none -translate-y-1/2"></div>
+    <div class="fixed bottom-0 right-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl pointer-events-none translate-y-1/2"></div>
+
+    <!-- Header bar -->
+    <header class="w-full max-w-5xl mx-auto flex justify-between items-center z-10 py-2">
+        <a href="index.html" class="flex items-center space-x-2.5 text-white group">
+            <div class="bg-white/10 p-2 rounded-xl border border-white/20 group-hover:bg-white/20 transition">
+                <i class="fa-solid fa-graduation-cap text-lg text-amber-300"></i>
+            </div>
+            <div>
+                <div class="font-bold text-sm tracking-wide">ระบบเช็คชื่ออัตโนมัติ</div>
+                <div class="text-[10px] text-indigo-300">Classroom System</div>
+            </div>
+        </a>
+
+        <a href="index.html" class="text-xs text-indigo-200 hover:text-white bg-white/10 hover:bg-white/20 px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 border border-white/10">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>กลับหน้าหลัก</span>
+        </a>
+    </header>
+
+    <!-- Main Login Card Container -->
+    <main class="w-full max-w-md mx-auto my-auto z-10 py-6">
+
+        <!-- Card Already Logged In (ถ้าล็อกอินอยู่แล้ว) -->
+        <div id="alreadyLoggedInCard" class="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20 space-y-5 text-center hidden">
+            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl mx-auto shadow-md">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-slate-800">เข้าสู่ระบบอยู่แล้ว</h2>
+                <p class="text-xs text-slate-500 mt-1">คุณกำลังใช้งานในฐานะ <b class="text-indigo-600 font-semibold">แอดมิน (admin)</b></p>
+            </div>
+            <div class="space-y-2 pt-2">
+                <button onclick="redirectToTarget()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow">
+                    <i class="fa-solid fa-arrow-right"></i> ไปยังระบบจัดการ
+                </button>
+                <button onclick="handleLogout()" class="w-full bg-slate-100 hover:bg-slate-200 text-rose-600 font-medium py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> ออกจากระบบ
+                </button>
+            </div>
+        </div>
+
+        <!-- Login Form Card (ฟอร์มล็อกอิน) -->
+        <div id="loginCard" class="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20 space-y-6">
+            
+            <!-- Card Header -->
+            <div class="text-center space-y-2">
+                <div class="w-16 h-16 bg-gradient-to-tr from-indigo-600 to-purple-600 text-white rounded-2xl flex items-center justify-center text-2xl mx-auto shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">เข้าสู่ระบบแอดมิน</h1>
+                <p class="text-xs text-slate-500">สำหรับอาจารย์และผู้ดูแลระบบเพื่อเข้าจัดการข้อมูล</p>
+            </div>
+
+            <!-- Demo Account Box (กล่องรหัสจำลองที่ผู้ใช้ขอ) -->
+            <div class="p-3.5 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border border-amber-200/80 text-xs text-amber-900 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold flex items-center gap-1.5 text-amber-800">
+                        <i class="fa-solid fa-key text-amber-600"></i> บัญชีจำลองแอดมิน:
+                    </span>
+                    <button type="button" onclick="quickFillDemo()" class="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 bg-white px-2 py-0.5 rounded-lg border border-indigo-200 shadow-xs hover:shadow transition">
+                        ⚡ กรอกให้อัตโนมัติ
+                    </button>
+                </div>
+                <div class="flex items-center justify-between text-[11px] pt-1 border-t border-amber-200/60 font-mono">
+                    <span>Username: <b class="bg-white/80 px-2 py-0.5 rounded text-amber-950 font-bold border border-amber-200/60">admin</b></span>
+                    <span>Password: <b class="bg-white/80 px-2 py-0.5 rounded text-amber-950 font-bold border border-amber-200/60">1234</b></span>
+                </div>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">ชื่อผู้ใช้งาน (Username)</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
+                            <i class="fa-solid fa-user text-sm"></i>
+                        </span>
+                        <input type="text" id="username" required placeholder="กรอกชื่อผู้ใช้ เช่น admin"
+                               class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50/50">
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label class="block text-xs font-semibold text-slate-700">รหัสผ่าน (Password)</label>
+                        <span class="text-[11px] text-slate-400">รหัสเริ่มต้น: 1234</span>
+                    </div>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
+                            <i class="fa-solid fa-lock text-sm"></i>
+                        </span>
+                        <input type="password" id="password" required placeholder="กรอกรหัสผ่าน 1234"
+                               class="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50/50">
+                        <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition">
+                            <i id="eyeIcon" class="fa-regular fa-eye text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between text-xs text-slate-600 pt-1">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="rememberMe" checked class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                        <span>จดจำการเข้าสู่ระบบ</span>
+                    </label>
+                    <a href="index.html#student" class="text-indigo-600 hover:underline">นักเรียนเช็คชื่อ (ไม่ต้องล็อกอิน)</a>
+                </div>
+
+                <div id="errorMessage" class="text-xs text-rose-600 font-medium text-center hidden p-2 bg-rose-50 rounded-xl border border-rose-100"></div>
+
+                <button type="submit" id="submitBtn"
+                        class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center justify-center gap-2 text-sm">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    <span>เข้าสู่ระบบ</span>
+                </button>
+            </form>
+
+            <div class="text-center pt-2 border-t border-slate-100">
+                <a href="index.html" class="text-xs text-slate-500 hover:text-indigo-600 transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-house"></i>
+                    <span>กลับสู่หน้าหลักของระบบ</span>
+                </a>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full max-w-5xl mx-auto text-center text-xs text-indigo-300/60 py-2 z-10">
+        ระบบเช็คชื่อ & จัดการเรียนการสอนอัตโนมัติ © 2026
+    </footer>
+
+    <!-- Script Logic -->
+    <script>
+        const DEMO_USER = "admin";
+        const DEMO_PASS = "1234";
+
+        // อ่าน redirect parameter จาก URL เช่น login.html?redirect=teacher
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetRedirect = urlParams.get('redirect') || 'home';
+
+        function checkExistingLogin() {
+            const isAuth = localStorage.getItem("stu_checkin_auth") === "true";
+            if (isAuth) {
+                document.getElementById("alreadyLoggedInCard").classList.remove("hidden");
+                document.getElementById("loginCard").classList.add("hidden");
+            } else {
+                document.getElementById("alreadyLoggedInCard").classList.add("hidden");
+                document.getElementById("loginCard").classList.remove("hidden");
+            }
+        }
+
+        function togglePassword() {
+            const passInput = document.getElementById("password");
+            const eyeIcon = document.getElementById("eyeIcon");
+            if (passInput.type === "password") {
+                passInput.type = "text";
+                eyeIcon.className = "fa-regular fa-eye-slash text-sm text-indigo-600";
+            } else {
+                passInput.type = "password";
+                eyeIcon.className = "fa-regular fa-eye text-sm";
+            }
+        }
+
+        function quickFillDemo() {
+            document.getElementById("username").value = DEMO_USER;
+            document.getElementById("password").value = DEMO_PASS;
+            document.getElementById("errorMessage").classList.add("hidden");
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const user = document.getElementById("username").value.trim();
+            const pass = document.getElementById("password").value.trim();
+            const errMsg = document.getElementById("errorMessage");
+            const btn = document.getElementById("submitBtn");
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> กำลังตรวจสอบ...`;
+
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-arrow-right-to-bracket"></i> <span>เข้าสู่ระบบ</span>`;
+
+                if (user.toLowerCase() === DEMO_USER && pass === DEMO_PASS) {
+                    localStorage.setItem("stu_checkin_auth", "true");
+                    errMsg.classList.add("hidden");
+
+                    Swal.fire({
+                        icon: "success",
+                        title: "เข้าสู่ระบบสำเร็จ!",
+                        text: "ยินดีต้อนรับอาจารย์ / ผู้ดูแลระบบ",
+                        timer: 1300,
+                        showConfirmButton: false
+                    }).then(() => {
+                        redirectToTarget();
+                    });
+                } else {
+                    errMsg.innerText = "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง (ลองใช้: admin / 1234)";
+                    errMsg.classList.remove("hidden");
+                }
+            }, 400);
+        }
+
+        function redirectToTarget() {
+            if (targetRedirect === 'teacher') {
+                window.location.href = "index.html#teacher";
+            } else if (targetRedirect === 'admin') {
+                window.location.href = "index.html#admin";
+            } else {
+                window.location.href = "index.html#home";
+            }
+        }
+
+        function handleLogout() {
+            localStorage.removeItem("stu_checkin_auth");
+            Swal.fire({
+                icon: "info",
+                title: "ออกจากระบบแล้ว",
+                timer: 1000,
+                showConfirmButton: false
+            }).then(() => {
+                checkExistingLogin();
+            });
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            checkExistingLogin();
+            // Pre-fill demo credentials
+            document.getElementById("username").value = DEMO_USER;
+            document.getElementById("password").value = DEMO_PASS;
+        };
+    </script>
+</body>
+</html>
