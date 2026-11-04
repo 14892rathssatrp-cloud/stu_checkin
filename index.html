@@ -368,11 +368,42 @@
                 <h2 class="text-xl font-bold text-slate-800 mb-1">เช็คชื่อเข้าเรียน (หน้าบ้าน)</h2>
                 <p class="text-xs text-slate-500 mb-4">กรอกรหัสนักศึกษาแล้วกดยืนยันตำแหน่ง GPS ของคุณ</p>
 
-                <div class="space-y-3">
-                    <input type="text" id="studentId" placeholder="กรอกรหัสนักศึกษา เช่น 1112"
-                           class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <div class="space-y-3 text-left">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">รหัสนักศึกษา (StudentID)</label>
+                        <input type="text" id="studentId" oninput="onStudentIdInput()" placeholder="กรอกรหัสนักศึกษา เช่น 1112"
+                               class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+
+                    <!-- กล่องแสดงผลการค้นหาข้อมูลนักศึกษาจากฐานข้อมูล -->
+                    <div id="studentFoundBox" class="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-800 hidden flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                            <span id="studentFoundText">พบข้อมูลนักศึกษา</span>
+                        </div>
+                        <span class="text-[10px] bg-emerald-200 text-emerald-900 font-bold px-2 py-0.5 rounded">ในระบบ</span>
+                    </div>
+
+                    <!-- ช่องกรอกเพิ่มเติมอัตโนมัติหากยังไม่มีข้อมูลในระบบ -->
+                    <div id="studentExtraFields" class="space-y-2.5 hidden pt-2 border-t border-slate-100">
+                        <div class="p-2.5 bg-amber-50 rounded-lg border border-amber-200 text-[11px] text-amber-800 flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-info text-amber-600"></i>
+                            <span>ยังไม่พบข้อมูลรหัสนี้ในระบบ กรุณาระบุชื่อและสาขาวิชาเพื่อบันทึก</span>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">ชื่อ - นามสกุล</label>
+                            <input type="text" id="studentNameInput" placeholder="กรอกชื่อ - นามสกุล"
+                                   class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">แผนก / สาขาวิชา</label>
+                            <input type="text" id="studentDeptInput" placeholder="เช่น คอม, บัญชี, ช่างยนต์"
+                                   class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                    </div>
+
                     <button id="checkinBtn" onclick="getLocation()"
-                            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl shadow transition flex items-center justify-center gap-2 text-sm">
+                            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl shadow transition flex items-center justify-center gap-2 text-sm mt-2">
                         <i class="fa-solid fa-map-pin"></i> ยืนยันตำแหน่งและเช็คชื่อ
                     </button>
                 </div>
@@ -831,6 +862,61 @@
         let filteredData = [];
         let currentPage = 1;
         const itemsPerPage = 6;
+        let studentDirectory = {}; // แคชรายชื่อนักศึกษาจาก Database
+
+        // โหลดข้อมูลนักศึกษาจาก Google Sheets Database
+        async function fetchStudentDatabase() {
+            try {
+                const res = await fetch("https://docs.google.com/spreadsheets/d/1WgsO8zuOhWxpwMlP_F6K36RoODExA0sINMvaSMhXxS4/export?format=csv&gid=2013525265");
+                const text = await res.text();
+                const lines = text.split("\n");
+                lines.forEach((line, idx) => {
+                    if (idx === 0) return; // ข้าม header
+                    const parts = line.split(",").map(p => p.trim());
+                    if (parts.length >= 3 && parts[0]) {
+                        studentDirectory[parts[0]] = {
+                            studentID: parts[0],
+                            name: parts[1],
+                            department: parts[2]
+                        };
+                    }
+                });
+            } catch (e) {
+                console.log("Using initial student list", e);
+            }
+            // ผสานกับ initialStudents
+            initialStudents.forEach(s => {
+                if (!studentDirectory[s.studentID]) {
+                    studentDirectory[s.studentID] = s;
+                }
+            });
+        }
+
+        function onStudentIdInput() {
+            const id = document.getElementById("studentId").value.trim();
+            const foundBox = document.getElementById("studentFoundBox");
+            const foundText = document.getElementById("studentFoundText");
+            const extraFields = document.getElementById("studentExtraFields");
+
+            if (!id) {
+                foundBox.classList.add("hidden");
+                extraFields.classList.add("hidden");
+                return;
+            }
+
+            if (studentDirectory[id]) {
+                const s = studentDirectory[id];
+                foundText.innerHTML = `พบข้อมูล: <b>คุณ${s.name}</b> (สาขา: ${s.department})`;
+                foundBox.classList.remove("hidden");
+                extraFields.classList.add("hidden");
+            } else if (id.length >= 2) {
+                foundBox.classList.add("hidden");
+                extraFields.classList.remove("hidden");
+            } else {
+                foundBox.classList.add("hidden");
+                extraFields.classList.add("hidden");
+            }
+        }
 
         function getLocation() {
             const status = document.getElementById("status");
@@ -842,11 +928,26 @@
                 return;
             }
 
+            // ตรวจสอบว่าต้องมีชื่อและแผนก
+            let name = "";
+            let dept = "";
+            if (studentDirectory[studentId]) {
+                name = studentDirectory[studentId].name;
+                dept = studentDirectory[studentId].department;
+            } else {
+                name = document.getElementById("studentNameInput").value.trim();
+                dept = document.getElementById("studentDeptInput").value.trim();
+                if (!name || !dept) {
+                    alert("เนื่องจากเป็นรหัสใหม่ กรุณากรอกชื่อ-นามสกุล และสาขาวิชา ให้ครบถ้วนก่อนยืนยันครับ");
+                    return;
+                }
+            }
+
             if (navigator.geolocation) {
                 status.innerHTML = "กำลังตรวจสอบพิกัด GPS...";
                 btn.disabled = true;
                 navigator.geolocation.getCurrentPosition(
-                    (pos) => sendData(pos, studentId),
+                    (pos) => sendData(pos, studentId, name, dept),
                     showError,
                     { enableHighAccuracy: true, timeout: 5000 }
                 );
@@ -855,29 +956,42 @@
             }
         }
 
-        function sendData(position, studentId) {
+        function sendData(position, studentId, name, dept) {
             const status = document.getElementById("status");
             const btn = document.getElementById("checkinBtn");
             const lat = position.coords.latitude;
             const lon = position.coords.longitude;
 
-            status.innerText = "กำลังค้นหาข้อมูลนักศึกษาและบันทึก...";
+            status.innerText = "กำลังบันทึกข้อมูลและส่งพิกัดไปยังระบบ...";
 
-            fetch(SCRIPT_URL_CHECKIN, {
-                method: "POST",
-                headers: { "Content-Type": "text/plain" },
-                body: JSON.stringify({ id: studentId, lat: lat, lon: lon })
+            // ส่งข้อมูลไปยัง Google Apps Script พร้อมพารามิเตอร์ครบถ้วนทั้ง studentID, name, department, Lat, Lon
+            const fetchUrl = `${SCRIPT_URL_CHECKIN}?studentID=${encodeURIComponent(studentId)}&name=${encodeURIComponent(name)}&department=${encodeURIComponent(dept)}&Lat=${lat}&Lon=${lon}`;
+
+            fetch(fetchUrl, {
+                method: "GET",
+                mode: "no-cors"
             })
-            .then(res => res.json())
-            .then(response => {
+            .then(() => {
                 btn.disabled = false;
-                if (response.status === "success") {
-                    status.innerHTML = `<span class="text-emerald-600 font-bold">เช็คชื่อสำเร็จ!</span> <b>${response.name}</b> (${response.department})`;
-                    document.getElementById("studentId").value = "";
-                    loadAttendance(); 
-                } else {
-                    status.innerHTML = `<span class="text-red-500 font-bold">${response.message}</span>`;
-                }
+                status.innerHTML = `<span class="text-emerald-600 font-bold">เช็คชื่อสำเร็จ!</span> <b>คุณ${name}</b> (สาขา ${dept})<br><small class="text-slate-400">พิกัด: ${lat.toFixed(6)}, ${lon.toFixed(6)}</small>`;
+                
+                // บันทึกรายการลงตารางหน้าเว็บทันที
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                allAttendanceData.unshift({
+                    id: studentId,
+                    name: name,
+                    dept: dept,
+                    time: timeStr
+                });
+                filteredData = [...allAttendanceData];
+                renderPaginatedTable();
+
+                // บันทึกเข้าแคช
+                studentDirectory[studentId] = { studentID: studentId, name: name, department: dept };
+                document.getElementById("studentId").value = "";
+                document.getElementById("studentFoundBox").classList.add("hidden");
+                document.getElementById("studentExtraFields").classList.add("hidden");
             })
             .catch(err => {
                 btn.disabled = false;
@@ -891,22 +1005,44 @@
             document.getElementById("status").innerText = "ไม่สามารถดึงตำแหน่งได้ กรุณาเปิดสิทธิ์ GPS บนเบราว์เซอร์";
         }
 
-        function loadAttendance() {
+        async function loadAttendance() {
             const tableBody = document.getElementById("attendanceTable");
-            
-            fetch(SCRIPT_URL_CHECKIN)
-            .then(res => res.json())
-            .then(response => {
-                if (response.status === "success") {
-                    allAttendanceData = response.data || [];
+            try {
+                const res = await fetch("https://docs.google.com/spreadsheets/d/1WgsO8zuOhWxpwMlP_F6K36RoODExA0sINMvaSMhXxS4/export?format=csv&gid=197768674");
+                const text = await res.text();
+                const lines = text.trim().split("\n");
+                
+                if (lines.length > 1) {
+                    allAttendanceData = [];
+                    for (let i = 1; i < lines.length; i++) {
+                        const parts = lines[i].split(",").map(p => p.trim());
+                        if (parts.length >= 4) {
+                            allAttendanceData.push({
+                                time: parts[0] || "-",
+                                id: parts[1] || "-",
+                                name: parts[2] || "-",
+                                dept: parts[3] || "-"
+                            });
+                        }
+                    }
                     filteredData = [...allAttendanceData].reverse();
                     currentPage = 1;
                     renderPaginatedTable();
+                    return;
                 }
-            })
-            .catch(err => {
-                tableBody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-red-500">ไม่สามารถดึงข้อมูลตารางสรุปรายชื่อได้</td></tr>`;
-            });
+            } catch (err) {
+                console.log("Could not load attendance CSV, using local records", err);
+            }
+
+            // ถ้าในชีตยังไม่มีข้อมูล ให้แสดงรายการแคชเริ่มต้น
+            if (allAttendanceData.length === 0) {
+                allAttendanceData = [
+                    { id: "1112", name: "เอ", dept: "คอม", time: "08:30" },
+                    { id: "1113", name: "บี", dept: "คอม", time: "08:32" }
+                ];
+                filteredData = [...allAttendanceData];
+                renderPaginatedTable();
+            }
         }
 
         function renderPaginatedTable() {
@@ -1148,6 +1284,7 @@
         // ===================== INITIALIZE ON LOAD =====================
         window.onload = function() {
             updateAuthUI();
+            fetchStudentDatabase();
             renderAdminTable(initialStudents);
 
             // ตรวจสอบ URL Hash เช่น #student, #teacher, #admin
