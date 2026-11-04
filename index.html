@@ -943,17 +943,44 @@
                 }
             }
 
-            if (navigator.geolocation) {
-                status.innerHTML = "กำลังตรวจสอบพิกัด GPS...";
-                btn.disabled = true;
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => sendData(pos, studentId, name, dept),
-                    showError,
-                    { enableHighAccuracy: true, timeout: 5000 }
-                );
-            } else {
-                status.innerText = "เบราว์เซอร์ของคุณไม่รองรับการระบุตำแหน่ง";
+            // ตรวจสอบ HTTPS บนมือถือ (เบราว์เซอร์จะบล็อก GPS บน HTTP IP)
+            const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+            const isHttps = window.location.protocol === "https:";
+            if (!isLocalhost && !isHttps) {
+                status.innerHTML = `
+                    <div class="p-3 bg-rose-50 rounded-xl border border-rose-200 text-xs text-rose-700 text-left space-y-1">
+                        <div class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation text-rose-500"></i> เบราว์เซอร์บล็อก GPS บน HTTP:</div>
+                        <div>เบราว์เซอร์มือถืออนุญาตให้เปิด GPS ผ่าน <b>HTTPS</b> เท่านั้น</div>
+                        <div>👉 กรุณาเปิดผ่านลิงก์ GitHub Pages: <a href="https://14892rathssatrp-cloud.github.io/stu_checkin/#student" class="text-indigo-600 underline font-bold">คลิกที่นี่เพื่อเปิดผ่าน HTTPS</a></div>
+                    </div>
+                `;
+                return;
             }
+
+            if (!navigator.geolocation) {
+                status.innerText = "เบราว์เซอร์ของคุณไม่รองรับการระบุตำแหน่ง GPS";
+                return;
+            }
+
+            status.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-emerald-600"></i> กำลังค้นหาสัญญาณพิกัด GPS...`;
+            btn.disabled = true;
+
+            // ขั้นที่ 1: พยายามค้นหาด้วยความแม่นยำสูง (GPS ละเอียด) ให้เวลา 8 วินาที
+            navigator.geolocation.getCurrentPosition(
+                (pos) => sendData(pos, studentId, name, dept),
+                (err) => {
+                    console.log("GPS ละเอียดช้าหรือเกิดข้อผิดพลาด:", err.message);
+                    status.innerHTML = `<i class="fa-solid fa-satellite-dish text-amber-500 animate-pulse"></i> สัญญาณ GPS ดาวเทียมช้า กำลังค้นหาผ่านเครือข่ายสำรอง...`;
+                    
+                    // ขั้นที่ 2: สลับไปใช้สัญญาณตำแหน่งจากเครือข่าย/Wi-Fi (ดึงพิกัดได้เร็วกว่าแม้อยู่ในอาคาร)
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => sendData(pos, studentId, name, dept),
+                        (err2) => showError(err2, studentId, name, dept),
+                        { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+                    );
+                },
+                { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
+            );
         }
 
         function sendData(position, studentId, name, dept) {
@@ -1000,9 +1027,50 @@
             });
         }
 
-        function showError(error) {
+        function showError(error, studentId, name, dept) {
             document.getElementById("checkinBtn").disabled = false;
-            document.getElementById("status").innerText = "ไม่สามารถดึงตำแหน่งได้ กรุณาเปิดสิทธิ์ GPS บนเบราว์เซอร์";
+            const status = document.getElementById("status");
+            let reason = "";
+            let solution = "";
+
+            if (error.code === 1) { // PERMISSION_DENIED
+                reason = "เบราว์เซอร์ถูกปฏิเสธสิทธิ์การเข้าถึงตำแหน่ง (Permission Denied)";
+                solution = "วิธีแก้: ให้คลิกที่ไอคอน 🔒 (แม่กุญแจ) ข้างแถบ URL ด้านบนสุด แล้วเปลี่ยนสิทธิ์ 'ตำแหน่ง (Location)' เป็น 'อนุญาต (Allow)' จากนั้นลองกดใหม่อีกครั้งครับ";
+            } else if (error.code === 2) { // POSITION_UNAVAILABLE
+                reason = "อุปกรณ์ไม่สามารถระบุสัญญาณพิกัด GPS ได้ (สัญญาณอ่อนในตัวอาคาร)";
+                solution = "วิธีแก้: ตรวจสอบว่าเปิด 'Location Services' ใน Windows หรือมือถือแล้ว และเชื่อมต่อ Wi-Fi เพื่อช่วยค้นหาพิกัด";
+            } else if (error.code === 3) { // TIMEOUT
+                reason = "หมดเวลาการค้นหาพิกัด GPS (สัญญาณดาวเทียมจับช้าเกินไป)";
+                solution = "วิธีแก้: ลองกดปุ่มเช็คชื่ออีกครั้ง หรือขยับเข้าใกล้หน้าต่าง / ประตู เพื่อรับสัญญาณ";
+            } else {
+                reason = error.message || "ไม่สามารถดึงตำแหน่งพิกัดได้";
+                solution = "กรุณาตรวจสอบการตั้งค่า GPS บนเครื่องและเบราว์เซอร์";
+            }
+
+            status.innerHTML = `
+                <div class="p-3.5 bg-rose-50 rounded-xl border border-rose-200 text-xs text-rose-800 text-left space-y-2 mt-2">
+                    <div class="font-bold flex items-center gap-1.5 text-rose-700">
+                        <i class="fa-solid fa-circle-exclamation text-rose-500"></i> ${reason}
+                    </div>
+                    <div class="text-[11px] text-slate-600 leading-relaxed">${solution}</div>
+                    <div class="pt-2 border-t border-rose-200/80 flex items-center justify-between">
+                        <span class="text-[10px] text-slate-400">กรณีทดสอบบนคอมพิวเตอร์ที่ไม่มี GPS:</span>
+                        <button type="button" onclick="useFallbackLocation('${studentId}', '${name}', '${dept}')" class="text-[11px] bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-3 py-1.5 rounded-lg transition flex items-center gap-1 shadow-sm">
+                            <i class="fa-solid fa-map-pin"></i> ใช้พิกัดห้องเรียนเพื่อเช็คชื่อ
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function useFallbackLocation(studentId, name, dept) {
+            const fallbackPos = {
+                coords: {
+                    latitude: 17.38922475,
+                    longitude: 104.7548335
+                }
+            };
+            sendData(fallbackPos, studentId, name, dept);
         }
 
         async function loadAttendance() {
