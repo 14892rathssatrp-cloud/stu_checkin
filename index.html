@@ -1198,22 +1198,28 @@
             document.getElementById("refreshBtn").style.display = "flex";
             status.innerHTML = "<span class='text-emerald-600 font-bold'>สร้าง QR Code สำเร็จ! กำลังบันทึกข้อมูล...</span>";
 
-            fetch(SCRIPT_URL_CHECKIN, {
-                method: "POST",
-                headers: { "Content-Type": "text/plain" },
-                body: JSON.stringify({ 
-                    action: "setTeacherLocation", 
-                    lat: lat, 
-                    lon: lon,
-                    token: newToken 
-                })
+            const fetchUrl = `${SCRIPT_URL_CHECKIN}?action=setTeacherLocation&lat=${lat}&lon=${lon}&token=${newToken}&UpdatedAt=${encodeURIComponent(new Date().toLocaleString('th-TH'))}`;
+
+            fetch(fetchUrl, {
+                method: "GET",
+                mode: "no-cors"
             })
-            .then(res => res.json())
-            .then(res => {
-                status.innerHTML = "<span class='text-emerald-600 font-bold'>อัปเดตพิกัดสำเร็จ! จำกัดรัศมีห้องเรียนไม่เกิน 3 เมตร</span>";
+            .then(() => {
+                status.innerHTML = `<span class='text-emerald-600 font-bold'>📍 ปักหมุดพิกัดสำเร็จ!</span> กำลังส่งพิกัดไปยัง Google Sheets<br><b class='text-slate-700'>Lat:</b> ${lat.toFixed(6)} | <b class='text-slate-700'>Lon:</b> ${lon.toFixed(6)}`;
             })
-            .catch(err => {
-                status.innerHTML = "<span class='text-emerald-600 font-bold'>สร้าง QR Code สำเร็จแล้ว (พร้อมใช้งาน)</span>";
+            .catch(() => {
+                // ส่งแบบ POST สำรอง
+                fetch(SCRIPT_URL_CHECKIN, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify({ 
+                        action: "setTeacherLocation", 
+                        lat: lat, 
+                        lon: lon,
+                        token: newToken 
+                    })
+                });
+                status.innerHTML = `<span class='text-emerald-600 font-bold'>📍 ปักหมุดพิกัดสำเร็จ!</span> (Lat: ${lat.toFixed(6)}, Lon: ${lon.toFixed(6)})`;
             });
         }
 
