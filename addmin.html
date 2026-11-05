@@ -346,7 +346,7 @@
             const name = document.getElementById('name').value;
             const department = document.getElementById('department').value;
 
-            const fetchUrl = `${SCRIPT_URL}?studentID=${encodeURIComponent(studentID)}&name=${encodeURIComponent(name)}&department=${encodeURIComponent(department)}`;
+            const fetchUrl = `${SCRIPT_URL}?action=addStudent&studentID=${encodeURIComponent(studentID)}&name=${encodeURIComponent(name)}&department=${encodeURIComponent(department)}`;
 
             fetch(fetchUrl, {
                 method: 'GET',

@@ -799,7 +799,7 @@
 
         // ===================== NAVIGATION & TAB SWITCHER =====================
         const SCRIPT_URL_CHECKIN = "https://script.google.com/macros/s/AKfycbxRzF5luY5xNRL8r0GTENd9-lGWYXZat2oc6kJXK7KZA7WiLHcgKsiSebB2rqXhzObs/exec"; 
-        const SCRIPT_URL_ADMIN = "https://script.google.com/macros/s/AKfycbxpy-iB3Qw5cxuyo-844bPu6UUymRbm9Uwzj6Z6f2jHTv5IM2uSsKg8J60i1R6b0cg/exec";
+        const SCRIPT_URL_ADMIN = "https://script.google.com/macros/s/AKfycbxRzF5luY5xNRL8r0GTENd9-lGWYXZat2oc6kJXK7KZA7WiLHcgKsiSebB2rqXhzObs/exec";
         const STUDENT_WEB_URL = window.location.href.split('#')[0]; 
 
         const tabs = ['home', 'student', 'teacher', 'admin'];
@@ -992,7 +992,7 @@
             status.innerText = "กำลังบันทึกข้อมูลและส่งพิกัดไปยังระบบ...";
 
             // ส่งข้อมูลไปยัง Google Apps Script พร้อมพารามิเตอร์ครบถ้วนทั้ง studentID, name, department, Lat, Lon
-            const fetchUrl = `${SCRIPT_URL_CHECKIN}?studentID=${encodeURIComponent(studentId)}&name=${encodeURIComponent(name)}&department=${encodeURIComponent(dept)}&Lat=${lat}&Lon=${lon}`;
+            const fetchUrl = `${SCRIPT_URL_CHECKIN}?action=checkin&studentID=${encodeURIComponent(studentId)}&name=${encodeURIComponent(name)}&department=${encodeURIComponent(dept)}&Lat=${lat}&Lon=${lon}`;
 
             fetch(fetchUrl, {
                 method: "GET",
@@ -1323,7 +1323,7 @@
             const name = document.getElementById('adminName').value;
             const department = document.getElementById('adminDepartment').value;
 
-            const fetchUrl = `${SCRIPT_URL_ADMIN}?studentID=${encodeURIComponent(studentID)}&name=${encodeURIComponent(name)}&department=${encodeURIComponent(department)}`;
+            const fetchUrl = `${SCRIPT_URL_ADMIN}?action=addStudent&studentID=${encodeURIComponent(studentID)}&name=${encodeURIComponent(name)}&department=${encodeURIComponent(department)}`;
 
             fetch(fetchUrl, {
                 method: 'GET',
